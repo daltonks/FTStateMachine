@@ -6,6 +6,9 @@ namespace FTStateMachine.Interfaces
     {
         TToken Token { get; }
 
+        IState<TToken> On<TTrigger>(Action onTrigger, bool forwardTrigger = true);
+        IState<TToken> On<TTrigger>(Func<bool> predicate, Action onTrigger, bool forwardTrigger = true);
+
         IState<TToken> On<TTrigger>(Action<TTrigger> onTrigger, bool forwardTrigger = true);
         IState<TToken> On<TTrigger>(Func<bool> predicate, Action<TTrigger> onTrigger, bool forwardTrigger = true);
 

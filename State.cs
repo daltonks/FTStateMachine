@@ -18,6 +18,16 @@ namespace FTStateMachine
             Triggers = new Dictionary<Type, List<Func<object, TriggerActionResult<TToken>>>>();
         }
 
+        public IState<TToken> On<TTrigger>(Action onTrigger, bool forwardTrigger = true)
+        {
+            return On<TTrigger>(null, onTrigger, forwardTrigger);
+        }
+
+        public IState<TToken> On<TTrigger>(Func<bool> predicate, Action onTrigger, bool forwardTrigger = true)
+        {
+            return On<TTrigger>(predicate, (trigger) => onTrigger.Invoke(), forwardTrigger);
+        }
+
         public IState<TToken> On<TTrigger>(Action<TTrigger> onTrigger, bool forwardTrigger = true)
         {
             return On(null, onTrigger, forwardTrigger);
