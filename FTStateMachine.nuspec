@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>FTStateMachine</id>
+    <version>0.0.2</version>
+    <title>Free-Trigger State Machine</title>
+    <authors>Dalton Spillman</authors>
+    <owners>Dalton Spillman</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Simple state machine implementation that allows for arbitrary triggers.</description>
+    <projectUrl>https://github.com/daltonks/FTStateMachine</projectUrl>
+    <releaseNotes>Created versions of State.On(...) with predicates.</releaseNotes>
+    <copyright>Copyright 2017</copyright>
+    <tags>State Machine</tags>
+  </metadata>
+  <files>
+    <file src="bin\Release\FTStateMachine.dll" target="lib\FTStateMachine\FTStateMachine.dll" />
+  </files>
+</package>
