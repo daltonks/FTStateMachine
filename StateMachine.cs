@@ -8,11 +8,12 @@ namespace FTStateMachine
     public class StateMachine<TStateToken> : IStateMachine<TStateToken>
     {
         private Dictionary<TStateToken, State<TStateToken>> States { get; }
-        private State<TStateToken> StartingState { get; set; }
+        private TStateToken StartingStateToken { get; }
         private State<TStateToken> CurrentState { get; set; }
 
-        public StateMachine()
+        public StateMachine(TStateToken startingStateToken)
         {
+            StartingStateToken = startingStateToken;
             States = new Dictionary<TStateToken, State<TStateToken>>();
         }
 
@@ -27,10 +28,6 @@ namespace FTStateMachine
 
             state = new State<TStateToken>(stateToken);
             States[stateToken] = state;
-            if (States.Count == 1)
-            {
-                StartingState = state;
-            }
             return state;
         }
 
@@ -78,7 +75,7 @@ namespace FTStateMachine
 
         public void GoToStartingState()
         {
-            GoToState(StartingState.Token);
+            GoToState(StartingStateToken);
         }
     }
 }
