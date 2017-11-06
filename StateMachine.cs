@@ -10,11 +10,9 @@ namespace FTStateMachine
         private Dictionary<TStateToken, State<TStateToken>> States { get; }
         private State<TStateToken> StartingState { get; set; }
         private State<TStateToken> CurrentState { get; set; }
-        private readonly bool _debugLogging;
 
-        public StateMachine(bool debugLogging = true)
+        public StateMachine()
         {
-            _debugLogging = debugLogging;
             States = new Dictionary<TStateToken, State<TStateToken>>();
         }
 
@@ -49,7 +47,8 @@ namespace FTStateMachine
             }
 
             var triggerResult = CurrentState.OnTriggerDispatch(trigger);
-            if (GoToState(triggerResult.StateToTransitionTo) && triggerResult.ForwardTrigger)
+            var transitionedToNewState = GoToState(triggerResult.StateToTransitionTo);
+            if (transitionedToNewState && triggerResult.ForwardTrigger)
             {
                 Dispatch(trigger);
             }
@@ -64,18 +63,12 @@ namespace FTStateMachine
 
             if (States.TryGetValue(stateToken, out State<TStateToken> newState))
             {
-                if (CurrentState != null)
-                {
-                    Dispatch(new StateExitedTrigger());
-                }
+                Dispatch(new StateExitedTrigger());
                 CurrentState = newState;
                 Dispatch(new StateEnteredTrigger());
 
                 #if DEBUG
-                if (_debugLogging)
-                {
-                    Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
-                }
+                Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
                 #endif
 
                 return true;
