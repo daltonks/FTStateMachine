@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27004.2006
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTStateMachine", "FTStateMachine.csproj", "{9E3E4EF6-7AE8-46A2-8FC1-EF2BFE572826}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTStateMachineExample", "FTStateMachineExample\FTStateMachineExample.csproj", "{E87B7B84-8DD8-4338-BD2A-488C3DA4B569}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{9E3E4EF6-7AE8-46A2-8FC1-EF2BFE572826}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E3E4EF6-7AE8-46A2-8FC1-EF2BFE572826}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E3E4EF6-7AE8-46A2-8FC1-EF2BFE572826}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E87B7B84-8DD8-4338-BD2A-488C3DA4B569}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E87B7B84-8DD8-4338-BD2A-488C3DA4B569}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E87B7B84-8DD8-4338-BD2A-488C3DA4B569}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E87B7B84-8DD8-4338-BD2A-488C3DA4B569}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

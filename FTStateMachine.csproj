@@ -59,7 +59,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Example\FtStateMachineExample.cs" />
     <Compile Include="Interfaces\IState.cs" />
     <Compile Include="Interfaces\IStateMachine.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

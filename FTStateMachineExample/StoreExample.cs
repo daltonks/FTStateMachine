@@ -1,26 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using FTStateMachine;
 using FTStateMachine.Interfaces;
 using FTStateMachine.Triggers;
 
-namespace FTStateMachine.Example
+namespace FTStateMachineExample
 {
-    public class FtStateMachineExample
+    public class StoreExample
     {
-        private static IStateMachine<StoreStates> _machine;
-        private static string _lastStoreName;
-        private static readonly List<Item> _unpaidItems = new List<Item>();
+        private IStateMachine<StoreStates> _machine;
+        private string _lastStoreName;
+        private readonly List<Item> _unpaidItems = new List<Item>();
 
-        public static void Main(string[] args)
+        public void Run()
         {
             SetupMachine();
             DispatchTriggers();
         }
 
-        private static void SetupMachine()
+        private void SetupMachine()
         {
             _machine = new StateMachine<StoreStates>(StoreStates.OutsideOfStore);
 
@@ -28,7 +27,7 @@ namespace FTStateMachine.Example
                 .On<StateEnteredTrigger>(
                     () => _unpaidItems.Any(i => i.StoreName == _lastStoreName),
                     () => {
-                        Console.WriteLine("Outside of the store with items! Thief!");
+                        Console.WriteLine("Outside of the store with unpaid items! Thief!");
                     }
                 )
                 .On<EnterStoreTrigger>(StoreStates.EnterStore)
@@ -67,7 +66,7 @@ namespace FTStateMachine.Example
             _machine.Start();
         }
 
-        private static void DispatchTriggers()
+        private void DispatchTriggers()
         {
             var storeName = "Shopaporium";
             _machine.Dispatch(new EnterStoreTrigger(storeName));
