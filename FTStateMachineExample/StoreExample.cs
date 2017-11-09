@@ -34,8 +34,7 @@ namespace FTStateMachineExample
                 .On<StateExitedTrigger>(() => Console.WriteLine("Exiting the OutsideOfStore state"));
 
             _machine.Configure(StoreStates.EnterStore)
-                .On<EnterStoreTrigger>(trigger =>
-                {
+                .On<EnterStoreTrigger>(trigger => {
                     _lastStoreName = trigger.StoreName;
                     Console.WriteLine($"Entering store {trigger.StoreName}");
                 })
@@ -51,8 +50,7 @@ namespace FTStateMachineExample
                 .On<LeaveStoreTrigger>(StoreStates.OutsideOfStore);
 
             _machine.Configure(StoreStates.Checkout)
-                .On<PayForItemsTrigger>(() =>
-                {
+                .On<PayForItemsTrigger>(() => {
                     var itemsToRemove = _unpaidItems.Where(i => i.StoreName == _lastStoreName).ToArray();
                     foreach (var itemToRemove in itemsToRemove)
                     {
