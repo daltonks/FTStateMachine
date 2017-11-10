@@ -10,6 +10,7 @@ namespace FTStateMachine
         private Dictionary<TStateToken, State<TStateToken>> States { get; }
         private TStateToken StartingStateToken { get; }
         private State<TStateToken> CurrentState { get; set; }
+        private readonly object _lock = new object();
 
         public StateMachine(TStateToken startingStateToken)
         {
@@ -38,39 +39,49 @@ namespace FTStateMachine
 
         public void Dispatch(object trigger)
         {
-            if (CurrentState == null)
+            lock(_lock)
             {
-                return;
-            }
+                while (true)
+                {
+                    if (CurrentState == null)
+                    {
+                        return;
+                    }
 
-            var triggerResult = CurrentState.OnTriggerDispatch(trigger);
-            var transitionedToNewState = GoToState(triggerResult.StateToTransitionTo);
-            if (transitionedToNewState && triggerResult.ForwardTrigger)
-            {
-                Dispatch(trigger);
+                    var triggerResult = CurrentState.OnTriggerDispatch(trigger);
+                    var transitionedToNewState = GoToState(triggerResult.StateToTransitionTo);
+                    if (transitionedToNewState && triggerResult.ForwardTrigger)
+                    {
+                        continue;
+                    }
+                    break;
+                }
             }
         }
 
         private bool GoToState(TStateToken stateToken)
         {
-            if (CurrentState != null && CurrentState.Token.Equals(stateToken))
+            lock (_lock)
             {
+                if (CurrentState != null && CurrentState.Token.Equals(stateToken))
+                {
+                    return false;
+                }
+
+                if (States.TryGetValue(stateToken, out State<TStateToken> newState))
+                {
+                    Dispatch(new StateExitedTrigger());
+                    CurrentState = newState;
+                    Dispatch(new StateEnteredTrigger());
+
+#if DEBUG
+                Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
+#endif
+
+                    return true;
+                }
                 return false;
             }
-
-            if (States.TryGetValue(stateToken, out State<TStateToken> newState))
-            {
-                Dispatch(new StateExitedTrigger());
-                CurrentState = newState;
-                Dispatch(new StateEnteredTrigger());
-
-                #if DEBUG
-                Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
-                #endif
-
-                return true;
-            }
-            return false;
         }
 
         public void GoToStartingState()
