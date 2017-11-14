@@ -2,20 +2,23 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using FTStateMachine.Interfaces;
 
 namespace FTStateMachine
 {
     public class State<TToken> : IState<TToken>
     {
+        public delegate Task<TriggerActionResult<TToken>> OnTriggerDelegate(object trigger);
+
         public TToken Token { get; }
 
-        private Dictionary<Type, List<Func<object, TriggerActionResult<TToken>>>> Triggers { get; }
+        private Dictionary<Type, List<OnTriggerDelegate>> OnTriggerMap { get; }
 
         public State(TToken token)
         {
             Token = token;
-            Triggers = new Dictionary<Type, List<Func<object, TriggerActionResult<TToken>>>>();
+            OnTriggerMap = new Dictionary<Type, List<OnTriggerDelegate>>();
         }
 
         public IState<TToken> On<TTrigger>(Action onTrigger, bool forwardTrigger = true)
@@ -35,12 +38,12 @@ namespace FTStateMachine
 
         public IState<TToken> On<TTrigger>(Func<bool> predicate, Action<TTrigger> onTrigger, bool forwardTrigger = true)
         {
-            return On<TTrigger>(
+            return OnAsync<TTrigger>(
                 predicate,
                 (trigger) =>
                 {
                     onTrigger?.Invoke(trigger);
-                    return Token;
+                    return Task.FromResult(Token);
                 },
                 forwardTrigger
             );
@@ -73,18 +76,41 @@ namespace FTStateMachine
 
         public IState<TToken> On<TTrigger>(Func<bool> predicate, Func<TTrigger, TToken> onTrigger, bool forwardTrigger = true)
         {
-            List<Func<object, TriggerActionResult<TToken>>> triggerFuncs;
+            return OnAsync(
+                predicate,
+                new Func<TTrigger, Task<TToken>>(trigger => Task.FromResult(onTrigger.Invoke(trigger))),
+                forwardTrigger
+            );
+        }
 
-            if(!Triggers.TryGetValue(typeof(TTrigger), out triggerFuncs))
+        public IState<TToken> OnAsync<TTrigger>(Func<Task<TToken>> onTrigger, bool forwardTrigger = true)
+        {
+            return OnAsync<TToken>(null, onTrigger, forwardTrigger);
+        }
+
+        public IState<TToken> OnAsync<TTrigger>(Func<bool> predicate, Func<Task<TToken>> onTrigger, bool forwardTrigger = true)
+        {
+            return OnAsync<TToken>(predicate, (trigger) => onTrigger.Invoke(), forwardTrigger);
+        }
+
+        public IState<TToken> OnAsync<TTrigger>(Func<TTrigger, Task<TToken>> onTrigger, bool forwardTrigger = true)
+        {
+            return OnAsync(null, onTrigger, forwardTrigger);
+        }
+
+        public IState<TToken> OnAsync<TTrigger>(Func<bool> predicate, Func<TTrigger, Task<TToken>> onTrigger, bool forwardTrigger = true)
+        {
+            List<OnTriggerDelegate> triggerFuncs;
+
+            if(!OnTriggerMap.TryGetValue(typeof(TTrigger), out triggerFuncs))
             {
-                Triggers[typeof(TTrigger)] = triggerFuncs = new List<Func<object, TriggerActionResult<TToken>>>();
+                OnTriggerMap[typeof(TTrigger)] = triggerFuncs = new List<OnTriggerDelegate>();
             }
 
-            triggerFuncs.Add((o) =>
-            {
+            triggerFuncs.Add(async (o) => {
                 if (predicate?.Invoke() ?? true)
                 {
-                    var stateToTransitionTo = onTrigger.Invoke((TTrigger) o);
+                    var stateToTransitionTo = await onTrigger.Invoke((TTrigger) o);
                     return new TriggerActionResult<TToken>(stateToTransitionTo, forwardTrigger);
                 }
                 else
@@ -96,11 +122,16 @@ namespace FTStateMachine
             return this;
         }
 
-        public TriggerActionResult<TToken> OnTriggerDispatch(object trigger)
+        public async Task<TriggerActionResult<TToken>> OnTriggerDispatchAsync(object trigger)
         {
-            if (Triggers.TryGetValue(trigger.GetType(), out List<Func<object, TriggerActionResult<TToken>>> triggerFuncs))
+            if (OnTriggerMap.TryGetValue(trigger.GetType(), out List<OnTriggerDelegate> triggerFuncs))
             {
-                var results = triggerFuncs.Select(f => f.Invoke(trigger)).ToArray();
+                var results = new TriggerActionResult<TToken>[triggerFuncs.Count];
+                for (var i = 0; i < triggerFuncs.Count; i++)
+                {
+                    results[i] = await triggerFuncs[i].Invoke(trigger);
+                }
+
                 var resultsWithStateChanges = results.Where(r => !r.StateToTransitionTo.Equals(Token)).ToArray();
                 Debug.Assert(resultsWithStateChanges.Length < 2, "Multiple trigger results want state changes!");
                 if (resultsWithStateChanges.Any())

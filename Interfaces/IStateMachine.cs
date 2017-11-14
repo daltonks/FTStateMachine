@@ -1,10 +1,12 @@
-﻿namespace FTStateMachine.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace FTStateMachine.Interfaces
 {
     public interface IStateMachine
     {
-        void Start();
-        void Dispatch(object trigger);
-        void GoToStartingState();
+        Task StartAsync();
+        Task DispatchAsync(object trigger);
+        Task GoToStartingStateAsync();
     }
 
     public interface IStateMachine<TStateToken> : IStateMachine
