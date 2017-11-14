@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using FTStateMachine;
 using FTStateMachine.Interfaces;
 using FTStateMachine.Triggers;
@@ -15,11 +16,11 @@ namespace FTStateMachineExample
 
         public void Run()
         {
-            SetupMachine();
-            DispatchTriggers();
+            SetupMachineAsync().Wait();
+            DispatchTriggersAsync().Wait();
         }
 
-        private void SetupMachine()
+        private async Task SetupMachineAsync()
         {
             _machine = new StateMachine<StoreStates>(StoreStates.OutsideOfStore);
 
@@ -50,7 +51,8 @@ namespace FTStateMachineExample
                 .On<LeaveStoreTrigger>(StoreStates.OutsideOfStore);
 
             _machine.Configure(StoreStates.Checkout)
-                .On<PayForItemsTrigger>(() => {
+                .On<PayForItemsTrigger>(() =>
+                {
                     var itemsToRemove = _unpaidItems.Where(i => i.StoreName == _lastStoreName).ToArray();
                     foreach (var itemToRemove in itemsToRemove)
                     {
@@ -61,23 +63,23 @@ namespace FTStateMachineExample
                 })
                 .On<LeaveStoreTrigger>(StoreStates.OutsideOfStore);
 
-            _machine.Start();
+            await _machine.StartAsync();
         }
 
-        private void DispatchTriggers()
+        private async Task DispatchTriggersAsync()
         {
             var storeName = "Shopaporium";
-            _machine.Dispatch(new EnterStoreTrigger(storeName));
-            _machine.Dispatch(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
-            _machine.Dispatch(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
-            _machine.Dispatch(new LeaveStoreTrigger());
-
-            _machine.Dispatch(new EnterStoreTrigger(storeName));
-            _machine.Dispatch(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
-            _machine.Dispatch(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
-            _machine.Dispatch(new GotoCheckoutTrigger());
-            _machine.Dispatch(new PayForItemsTrigger());
-            _machine.Dispatch(new LeaveStoreTrigger());
+            await _machine.DispatchAsync(new EnterStoreTrigger(storeName));
+            await _machine.DispatchAsync(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
+            await _machine.DispatchAsync(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
+            await _machine.DispatchAsync(new LeaveStoreTrigger());
+            
+            await _machine.DispatchAsync(new EnterStoreTrigger(storeName));
+            await _machine.DispatchAsync(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
+            await _machine.DispatchAsync(new AddItemToBasketTrigger(new Item(Guid.NewGuid(), storeName)));
+            await _machine.DispatchAsync(new GotoCheckoutTrigger());
+            await _machine.DispatchAsync(new PayForItemsTrigger());
+            await _machine.DispatchAsync(new LeaveStoreTrigger());
         }
 
         private enum StoreStates

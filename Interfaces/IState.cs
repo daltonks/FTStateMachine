@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace FTStateMachine.Interfaces
 {
-    public interface IState<in TToken>
+    public interface IState<TToken>
     {
         IState<TToken> On<TTrigger>(Action onTrigger, bool forwardTrigger = true);
         IState<TToken> On<TTrigger>(Func<bool> predicate, Action onTrigger, bool forwardTrigger = true);
@@ -18,5 +19,11 @@ namespace FTStateMachine.Interfaces
 
         IState<TToken> On<TTrigger>(Func<TTrigger, TToken> onTrigger, bool forwardTrigger = true);
         IState<TToken> On<TTrigger>(Func<bool> predicate, Func<TTrigger, TToken> onTrigger, bool forwardTrigger = true);
+
+        IState<TToken> OnAsync<TTrigger>(Func<Task<TToken>> onTrigger, bool forwardTrigger = true);
+        IState<TToken> OnAsync<TTrigger>(Func<bool> predicate, Func<Task<TToken>> onTrigger, bool forwardTrigger = true);
+
+        IState<TToken> OnAsync<TTrigger>(Func<TTrigger, Task<TToken>> onTrigger, bool forwardTrigger = true);
+        IState<TToken> OnAsync<TTrigger>(Func<bool> predicate, Func<TTrigger, Task<TToken>> onTrigger, bool forwardTrigger = true);
     }
 }

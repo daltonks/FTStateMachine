@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using FTStateMachine.Interfaces;
 using FTStateMachine.Triggers;
 
@@ -10,7 +12,7 @@ namespace FTStateMachine
         private Dictionary<TStateToken, State<TStateToken>> States { get; }
         private TStateToken StartingStateToken { get; }
         private State<TStateToken> CurrentState { get; set; }
-        private readonly object _lock = new object();
+        private readonly Mutex _mutex = new Mutex();
 
         public StateMachine(TStateToken startingStateToken)
         {
@@ -32,61 +34,61 @@ namespace FTStateMachine
             return state;
         }
 
-        public void Start()
+        public async Task StartAsync()
         {
-            GoToStartingState();
+            await GoToStartingStateAsync();
         }
 
-        public void Dispatch(object trigger)
+        public async Task DispatchAsync(object trigger)
         {
-            lock(_lock)
+            _mutex.WaitOne();
+            while (true)
             {
-                while (true)
+                if (CurrentState == null)
                 {
-                    if (CurrentState == null)
-                    {
-                        return;
-                    }
-
-                    var triggerResult = CurrentState.OnTriggerDispatch(trigger);
-                    var transitionedToNewState = GoToState(triggerResult.StateToTransitionTo);
-                    if (transitionedToNewState && triggerResult.ForwardTrigger)
-                    {
-                        continue;
-                    }
                     break;
                 }
+
+                var triggerResult = await CurrentState.OnTriggerDispatchAsync(trigger);
+                var transitionedToNewState = await GoToStateAsync(triggerResult.StateToTransitionTo);
+                if (transitionedToNewState && triggerResult.ForwardTrigger)
+                {
+                    continue;
+                }
+                break;
             }
+            _mutex.ReleaseMutex();
         }
 
-        private bool GoToState(TStateToken stateToken)
+        private async Task<bool> GoToStateAsync(TStateToken stateToken)
         {
-            lock (_lock)
+            bool result;
+            _mutex.WaitOne();
+            if (CurrentState != null && CurrentState.Token.Equals(stateToken))
             {
-                if (CurrentState != null && CurrentState.Token.Equals(stateToken))
-                {
-                    return false;
-                }
-
-                if (States.TryGetValue(stateToken, out State<TStateToken> newState))
-                {
-                    Dispatch(new StateExitedTrigger());
-                    CurrentState = newState;
-                    Dispatch(new StateEnteredTrigger());
-
+                result = false;
+            }
+            else if (States.TryGetValue(stateToken, out State<TStateToken> newState))
+            {
+                await DispatchAsync(new StateExitedTrigger());
+                CurrentState = newState;
+                await DispatchAsync(new StateEnteredTrigger());
 #if DEBUG
                 Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
 #endif
-
-                    return true;
-                }
-                return false;
+                result = true;
             }
+            else
+            {
+                result = false;
+            }
+            _mutex.ReleaseMutex();
+            return result;
         }
-
-        public void GoToStartingState()
+            
+        public async Task GoToStartingStateAsync()
         {
-            GoToState(StartingStateToken);
+            await GoToStateAsync(StartingStateToken);
         }
     }
 }
