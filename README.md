@@ -4,7 +4,7 @@
 
 A small C# state machine whose triggers are ordinary objects.
 
-FT is for free-trigger. Most state machine libraries want you to enumerate every trigger up front, alongside the states, which means a trigger can't carry data with it. Here a trigger is any class you like, so the thing that causes a transition can also bring along whatever the transition needs:
+FT is for free-trigger. Most state machine libraries want every trigger declared up front alongside the states, which means a trigger can't carry data. Here a trigger is any class you like, so it can bring along whatever the transition needs:
 
 ```cs
 _machine.Configure(StoreStates.EnterStore)
@@ -21,7 +21,7 @@ dotnet add package FTStateMachine
 
 ## Use
 
-States are identified by a token of whatever type you pick — an enum is the usual choice. Configure each one, then start the machine and dispatch triggers at it.
+States are identified by a token of whatever type you pick. An enum is the usual choice. Configure each state, then start the machine and dispatch triggers at it.
 
 ```cs
 var machine = new StateMachine<DoorState>(DoorState.Closed);
@@ -38,11 +38,11 @@ await machine.StartAsync();
 await machine.DispatchAsync(new OpenTrigger());
 ```
 
-`DispatchAsync` takes an `object`. A trigger the current state has no handler for is ignored, so states only declare what they actually care about.
+`DispatchAsync` takes an `object`. A trigger the current state has no handler for is ignored, so each state only declares what it cares about.
 
 ### Handling a trigger
 
-`On<TTrigger>` comes in a few shapes, and you can register more than one handler for the same trigger on the same state:
+`On<TTrigger>` comes in a few shapes. You can register more than one handler for the same trigger on the same state:
 
 ```cs
 // Run something
@@ -67,7 +67,7 @@ Each shape takes an optional `Func<bool> predicate`, checked when the trigger ar
 
 ### Entering and exiting
 
-`StateEnteredTrigger` and `StateExitedTrigger` are dispatched by the machine itself when a state is entered and left, so setup and teardown are handled the same way as everything else:
+The machine dispatches `StateEnteredTrigger` and `StateExitedTrigger` itself when a state is entered and left, so setup and teardown work the same way as everything else:
 
 ```cs
 machine.Configure(StoreStates.OutsideOfStore)
@@ -104,7 +104,7 @@ Pass `forwardTrigger: false` to stop that and have the trigger end at the transi
 
 ## Example
 
-[`FTStateMachineExample/StoreExample.cs`](FTStateMachineExample/StoreExample.cs) walks a shopper through a store — entering, filling a basket, paying or not — and prints what happens at each step, including the case where they leave without paying.
+[`FTStateMachineExample/StoreExample.cs`](FTStateMachineExample/StoreExample.cs) walks a shopper through a store: entering, filling a basket, then either paying or leaving without paying. It prints what happens at each step.
 
 ## Requirements
 
