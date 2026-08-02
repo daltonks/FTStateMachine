@@ -85,12 +85,12 @@ namespace FTStateMachine
 
         public IState<TToken> OnAsync<TTrigger>(Func<Task<TToken>> onTrigger, bool forwardTrigger = true)
         {
-            return OnAsync<TToken>(null, onTrigger, forwardTrigger);
+            return OnAsync<TTrigger>(null, onTrigger, forwardTrigger);
         }
 
         public IState<TToken> OnAsync<TTrigger>(Func<bool> predicate, Func<Task<TToken>> onTrigger, bool forwardTrigger = true)
         {
-            return OnAsync<TToken>(predicate, (trigger) => onTrigger.Invoke(), forwardTrigger);
+            return OnAsync(predicate, (TTrigger trigger) => onTrigger.Invoke(), forwardTrigger);
         }
 
         public IState<TToken> OnAsync<TTrigger>(Func<TTrigger, Task<TToken>> onTrigger, bool forwardTrigger = true)

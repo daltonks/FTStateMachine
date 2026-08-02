@@ -12,6 +12,7 @@
     <projectUrl>https://github.com/daltonks/FTStateMachine</projectUrl>
     <releaseNotes>
 - Fixed a deadlock when a trigger handler awaited anything that did not complete synchronously
+- Fixed the parameterless OnAsync overloads registering under the state token type instead of the trigger type, which meant they never fired
 - Added the MIT license
     </releaseNotes>
     <copyright>Copyright 2017</copyright>
