@@ -2,16 +2,17 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>FTStateMachine</id>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
     <title>Free-Trigger State Machine</title>
     <authors>Dalton Spillman</authors>
     <owners>Dalton Spillman</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
     <description>Simple state machine implementation that allows for arbitrary triggers.</description>
     <projectUrl>https://github.com/daltonks/FTStateMachine</projectUrl>
     <releaseNotes>
-- BREAKING CHANGE: IStateMachine now has StartAsync, DispatchAsync, and GoToStartingStateAsync (they were all converted to be async to support OnAsync state trigger handlers)
-- Created State.OnAsync methods
+- Fixed a deadlock when a trigger handler awaited anything that did not complete synchronously
+- Added the MIT license
     </releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>State Machine</tags>

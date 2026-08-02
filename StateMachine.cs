@@ -12,7 +12,13 @@ namespace FTStateMachine
         private Dictionary<TStateToken, State<TStateToken>> States { get; }
         private TStateToken StartingStateToken { get; }
         private State<TStateToken> CurrentState { get; set; }
-        private readonly Mutex _mutex = new Mutex();
+
+        /// <summary>
+        /// Serializes dispatches. Held only by the public entry points; the
+        /// Core methods below assume it is already held, since transitioning
+        /// dispatches the enter/exit triggers and would otherwise re-enter.
+        /// </summary>
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         public StateMachine(TStateToken startingStateToken)
         {
@@ -41,7 +47,32 @@ namespace FTStateMachine
 
         public async Task DispatchAsync(object trigger)
         {
-            _mutex.WaitOne();
+            await _semaphore.WaitAsync();
+            try
+            {
+                await DispatchCoreAsync(trigger);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        public async Task GoToStartingStateAsync()
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                await GoToStateCoreAsync(StartingStateToken);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        private async Task DispatchCoreAsync(object trigger)
+        {
             while (true)
             {
                 if (CurrentState == null)
@@ -50,45 +81,34 @@ namespace FTStateMachine
                 }
 
                 var triggerResult = await CurrentState.OnTriggerDispatchAsync(trigger);
-                var transitionedToNewState = await GoToStateAsync(triggerResult.StateToTransitionTo);
+                var transitionedToNewState = await GoToStateCoreAsync(triggerResult.StateToTransitionTo);
                 if (transitionedToNewState && triggerResult.ForwardTrigger)
                 {
                     continue;
                 }
                 break;
             }
-            _mutex.ReleaseMutex();
         }
 
-        private async Task<bool> GoToStateAsync(TStateToken stateToken)
+        private async Task<bool> GoToStateCoreAsync(TStateToken stateToken)
         {
-            bool result;
-            _mutex.WaitOne();
             if (CurrentState != null && CurrentState.Token.Equals(stateToken))
             {
-                result = false;
+                return false;
             }
-            else if (States.TryGetValue(stateToken, out State<TStateToken> newState))
+
+            if (!States.TryGetValue(stateToken, out State<TStateToken> newState))
             {
-                await DispatchAsync(new StateExitedTrigger());
-                CurrentState = newState;
-                await DispatchAsync(new StateEnteredTrigger());
+                return false;
+            }
+
+            await DispatchCoreAsync(new StateExitedTrigger());
+            CurrentState = newState;
+            await DispatchCoreAsync(new StateEnteredTrigger());
 #if DEBUG
-                Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
+            Debug.WriteLine($" - {typeof(TStateToken).Name}: {CurrentState.Token}");
 #endif
-                result = true;
-            }
-            else
-            {
-                result = false;
-            }
-            _mutex.ReleaseMutex();
-            return result;
-        }
-            
-        public async Task GoToStartingStateAsync()
-        {
-            await GoToStateAsync(StartingStateToken);
+            return true;
         }
     }
 }
